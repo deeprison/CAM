@@ -142,7 +142,7 @@ def save_images_rgb(data, solution):
 def save_gif(duration=.1, loop=0):
     images = []
     files = [f for f in os.listdir("./") if "png" in f]
-    files = sorted(os.listdir("./"), key=lambda x: int(x.split(".")[0][1:]))
+    files = sorted(files, key=lambda x: int(x.split(".")[0][1:]))
     for f in files:
         images.append(imageio.imread("./"+f))
         os.remove("./"+f)
