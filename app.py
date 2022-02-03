@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
 from constants import *
+from ga import Solver
 
 
 def get_random_env(n, seed):
