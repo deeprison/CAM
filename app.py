@@ -1,3 +1,5 @@
+import os
+import imageio
 import random
 import numpy as np
 import pandas as pd
@@ -86,6 +88,67 @@ def get_images(data, route):
     return images
 
 
+
+def get_distance(crd1, crd2):
+    return np.sqrt((crd1[0] - crd2[0]) ** 2 + (crd1[1] - crd2[1]) ** 2)
+
+
+def confirm_aircut(pc, coo):
+    na = [
+        (pc[0], pc[1]+1), (pc[0], pc[1]-1), (pc[0]+1, pc[1]), (pc[0]-1, pc[1]),
+        (pc[0]+1, pc[1]+1), (pc[0]+1, pc[1]-1), (pc[0]-1, pc[1]+1), (pc[0]-1, pc[1]-1)
+    ]
+    if coo not in na:
+        return 1
+    return 0
+
+
+def save_images_rgb(data, solution):
+    data3 = np.concatenate([data[..., np.newaxis] for _ in range(3)], axis=-1)
+
+    plt.imshow(data3, vmin=0, vmax=1)
+    plt.axis("off")
+    plt.title("Time:0s    AirCut:0", fontsize=15)
+    plt.savefig("./saved/f0.png", bbox_inches="tight", pad_inches=0)
+    plt.close()
+
+    px, py = solution[0][0], solution[0][1]
+    data3[px, py, :] = [.9, .1, .1]
+    plt.imshow(data3, vmin=0, vmax=1)
+    plt.axis("off")
+    plt.title("Time:0s    AirCut:0", fontsize=15)
+    plt.savefig("./saved/f1.png", bbox_inches="tight", pad_inches=0)
+    plt.close()
+
+    t, ac = 1, 0
+    for ind, (x, y) in enumerate(solution[1:]):
+        t += get_distance((px, py), (x, y))
+        ac += confirm_aircut((px, py), (x, y))
+
+        if sum(data3[x, y, :]) == 0:
+            data3[x, y, :] = [.9, .1, .1]
+        else:
+            data3[x, y, :] = [.9, .1, .1]  # [.0, .0, .3]
+        data3[px, py, :] = [.7, .7, .7]
+
+        px, py = x, y
+        plt.imshow(data3, vmin=0, vmax=1)
+        plt.axis("off")
+        plt.title(f"Time:{t:.2f}s    AirCut:{int(ac)}", fontsize=15)
+        plt.savefig(f"./saved/f{ind+2}.png", bbox_inches="tight", pad_inches=0)
+        plt.close()
+
+
+def save_gif(duration=.1, loop=0):
+    images = []
+    files = sorted(os.listdir("./saved"), key=lambda x: int(x.split(".")[0][1:]))
+    for f in files:
+        images.append(imageio.imread("./saved/"+f))
+        os.remove("./saved/"+f)
+
+    imageio.mimsave("./gif.gif", images, duration=duration, loop=loop)
+
+
 st.set_page_config(
     layout="centered",  # wide
     initial_sidebar_state="auto",
@@ -108,20 +171,14 @@ st.markdown(
 )
 
 with st.sidebar:
-    # st.image(INTRO_IMG)
     """
-    👨🏻‍💻 Made by &nbsp \
-        [![kyunghoonjung](https://img.shields.io/badge/-KyunghoonJung-1C0AF7)]\
-            (https://github.com/kyunghoon-jung)\
-        [![Diominor](https://img.shields.io/badge/-Diominor-810AF7)]\
-            (https://github.com/backgom2357)\
-        [![SSinyu](https://img.shields.io/badge/-SSinyu-C80AF7)]\
-            (https://github.com/SSinyu)
+    👨🏻‍💻 Made by &nbsp [![SSinyu](https://img.shields.io/badge/-SSinyu-C80AF7)](https://github.com/SSinyu)
     """
 
     st.write("#")
     seed = int(st.number_input("🔌 Seed", value=2022, min_value=1, max_value=10000))
     env = get_data_info(seed)
+    data = env.copy()
 
     # n_routes, n_gene = get_train_info()
     st.write("#")
@@ -195,6 +252,13 @@ if sol is not None:
         b_rte = pd.DataFrame(sol).to_csv(index=False, header=None).encode("utf-8")
         dl_rte = st.download_button("Route Download", b_rte, file_name="route.csv")
 
-        np.save("./tmp.npy", env)
-        _env = np.load("./tmp.npy")
-        st.write(_env.shape)
+
+        save_images_rgb(data, sol)
+        save_gif()
+
+        with open("./gif.gif", "rb") as f:
+            dl_gif = st.download_button("Gif Download", f, file_name="route.gif")
+
+        # np.save("./tmp.npy", env)
+        # _env = np.load("./tmp.npy")
+        # st.write(_env.shape)
