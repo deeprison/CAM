@@ -109,7 +109,7 @@ def save_images_rgb(data, solution):
     plt.imshow(data3, vmin=0, vmax=1)
     plt.axis("off")
     plt.title("Time:0s    AirCut:0", fontsize=15)
-    plt.savefig("./saved/f0.png", bbox_inches="tight", pad_inches=0)
+    plt.savefig("./f0.png", bbox_inches="tight", pad_inches=0)
     plt.close()
 
     px, py = solution[0][0], solution[0][1]
@@ -117,7 +117,7 @@ def save_images_rgb(data, solution):
     plt.imshow(data3, vmin=0, vmax=1)
     plt.axis("off")
     plt.title("Time:0s    AirCut:0", fontsize=15)
-    plt.savefig("./saved/f1.png", bbox_inches="tight", pad_inches=0)
+    plt.savefig("./f1.png", bbox_inches="tight", pad_inches=0)
     plt.close()
 
     t, ac = 1, 0
@@ -135,17 +135,17 @@ def save_images_rgb(data, solution):
         plt.imshow(data3, vmin=0, vmax=1)
         plt.axis("off")
         plt.title(f"Time:{t:.2f}s    AirCut:{int(ac)}", fontsize=15)
-        plt.savefig(f"./saved/f{ind+2}.png", bbox_inches="tight", pad_inches=0)
+        plt.savefig(f"./f{ind+2}.png", bbox_inches="tight", pad_inches=0)
         plt.close()
 
 
 def save_gif(duration=.1, loop=0):
     images = []
     files = [f for f in os.listdir("./") if "png" in f]
-    files = sorted(os.listdir("./saved"), key=lambda x: int(x.split(".")[0][1:]))
+    files = sorted(os.listdir("./"), key=lambda x: int(x.split(".")[0][1:]))
     for f in files:
-        images.append(imageio.imread("./saved/"+f))
-        os.remove("./saved/"+f)
+        images.append(imageio.imread("./"+f))
+        os.remove("./"+f)
 
     imageio.mimsave("./gif.gif", images, duration=duration, loop=loop)
 
