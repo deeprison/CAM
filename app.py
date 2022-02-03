@@ -141,6 +141,7 @@ def save_images_rgb(data, solution):
 
 def save_gif(duration=.1, loop=0):
     images = []
+    files = [f for f in os.listdir("./") if "png" in f]
     files = sorted(os.listdir("./saved"), key=lambda x: int(x.split(".")[0][1:]))
     for f in files:
         images.append(imageio.imread("./saved/"+f))
@@ -172,7 +173,7 @@ st.markdown(
 
 with st.sidebar:
     """
-    👨🏻‍💻 Made by &nbsp [![SSinyu](https://img.shields.io/badge/-SSinyu-C80AF7)](https://github.com/SSinyu)
+    👨🏻‍💻 Made by [![SSinyu](https://img.shields.io/badge/-SSinyu-C80AF7)](https://github.com/SSinyu)
     """
 
     st.write("#")
