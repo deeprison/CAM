@@ -139,14 +139,15 @@ class InitRoute:
         self.pos_crds, self.imp_crds = get_crds(env)
 
         if n_routes == "auto":
-            lin_routes = self.lin_generation()
+            # lin_routes = self.lin_generation()
             cont_routes = []
             for crd in self.pos_crds:
                 route = self.random_cont_generation(5, crd, True)
                 cont_routes.extend(route)
+            self.routes = cont_routes
             # cont_routes = self.random_cont_generation(n_routes - len(lin_routes))
-            self.routes = lin_routes + cont_routes
-            print(f"Use {len(self.routes)} routes")
+            # self.routes = lin_routes + cont_routes
+            # print(f"Use {len(self.routes)} routes")
 
     def random_generation(self, n_routes):
         routes = []

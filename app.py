@@ -106,6 +106,7 @@ def confirm_aircut(pc, coo):
 def save_images_rgb(data, solution):
     data3 = np.concatenate([data[..., np.newaxis] for _ in range(3)], axis=-1)
 
+    plt.figure(figsize=(8, 8))
     plt.imshow(data3, vmin=0, vmax=1)
     plt.axis("off")
     plt.title("Time:0s    AirCut:0", fontsize=15)
@@ -114,6 +115,8 @@ def save_images_rgb(data, solution):
 
     px, py = solution[0][0], solution[0][1]
     data3[px, py, :] = [.9, .1, .1]
+
+    plt.figure(figsize=(8, 8))
     plt.imshow(data3, vmin=0, vmax=1)
     plt.axis("off")
     plt.title("Time:0s    AirCut:0", fontsize=15)
@@ -132,6 +135,7 @@ def save_images_rgb(data, solution):
         data3[px, py, :] = [.7, .7, .7]
 
         px, py = x, y
+        plt.figure(figsize=(8, 8))
         plt.imshow(data3, vmin=0, vmax=1)
         plt.axis("off")
         plt.title(f"Time:{t:.2f}s    AirCut:{int(ac)}", fontsize=15)
@@ -252,7 +256,6 @@ if sol is not None:
         st.write(" ")
         b_rte = pd.DataFrame(sol).to_csv(index=False, header=None).encode("utf-8")
         dl_rte = st.download_button("Route Download", b_rte, file_name="route.csv")
-
 
         save_images_rgb(data, sol)
         save_gif()
