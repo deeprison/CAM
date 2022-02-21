@@ -96,6 +96,19 @@ def get_cix(route):
     return cix
 
 
+def sfl(route):
+    n = len(route) // 10
+    splited = []
+    for i in range(0, len(route), n):
+        splited.append(route[i:(i+n)])
+
+    sfled = []
+    indexes = np.random.choice(range(len(splited)), len(splited), replace=False)
+    for idx in indexes:
+        sfled.extend(splited[idx])
+    return sfled
+
+
 def breed(pra, prb, cix_ratio=.8):
     cra, crb = [], []
     if np.random.random() < cix_ratio:
@@ -151,22 +164,21 @@ def confirm_aircut(pc, coo):
 def save_images_rgb(data, solution, save_path):
     data3 = np.concatenate([data[..., np.newaxis] for _ in range(3)], axis=-1)
 
-    plt.figure(figsize=(8, 8))
+    plt.figure()
     plt.imshow(data3, vmin=0, vmax=1)
     plt.axis("off")
     plt.title("Time:0s    AirCut:0", fontsize=15)
     plt.savefig(join(save_path, "./f0.png"), bbox_inches="tight", pad_inches=0)
-    plt.close()
+    plt.clf()
 
     px, py = solution[0][0], solution[0][1]
     data3[px, py, :] = [.9, .1, .1]
 
-    plt.figure(figsize=(8, 8))
     plt.imshow(data3, vmin=0, vmax=1)
     plt.axis("off")
     plt.title("Time:0s    AirCut:0", fontsize=15)
     plt.savefig(join(save_path, "./f1.png"), bbox_inches="tight", pad_inches=0)
-    plt.close()
+    plt.clf()
 
     t, ac = 1, 0
     prog = tqdm(
@@ -185,12 +197,11 @@ def save_images_rgb(data, solution, save_path):
         data3[px, py, :] = [.7, .7, .7]
 
         px, py = x, y
-        plt.figure(figsize=(8, 8))
         plt.imshow(data3, vmin=0, vmax=1)
         plt.axis("off")
         plt.title(f"Time:{t:.2f}s    AirCut:{int(ac)}", fontsize=15)
         plt.savefig(join(save_path, f"./f{ind+2}.png"), bbox_inches="tight", pad_inches=0)
-        plt.close()
+        plt.clf()
 
 
 def save_gif(duration=.1, loop=0, png_path="./", save_path="./route.gif"):
@@ -204,22 +215,26 @@ def save_gif(duration=.1, loop=0, png_path="./", save_path="./route.gif"):
 
 
 class InitRoute:
-    def __init__(self, env, n_routes="auto"):
+    def __init__(self, env):
         self.env = env
         self.pos_crds, self.imp_crds = get_crds(env)
 
-        if n_routes == "auto":
-            # lin_routes = self.lin_generation()
-            cont_routes = []
-            for crd in self.pos_crds:
-                route = self.random_cont_generation(5, crd, True)
-                cont_routes.extend(route)
-            self.routes = cont_routes
-            # cont_routes = self.random_cont_generation(n_routes - len(lin_routes))
-            # self.routes = lin_routes + cont_routes
-            # print(f"Use {len(self.routes)} routes")
+        cont_routes = []
+        for crd in self.pos_crds:
+            cont_routes.extend(self.random_cont_generation(5, crd, True))
+        self.n_routes = len(cont_routes)
+        self.set_routes()
 
-    def random_generation(self, n_routes):
+        cont_routes = []
+        for crd in self.pos_crds:
+            route = self.random_cont_generation(5, crd, True)
+            cont_routes.extend(route)
+        self.routes = cont_routes
+
+    def random_generation(self, n_routes=None):
+        if n_routes is None:
+            n_routes = self.n_routes
+
         routes = []
         for _ in range(n_routes):
             _route = random.sample(self.pos_crds, len(self.pos_crds))
@@ -229,47 +244,21 @@ class InitRoute:
     def remove_crds(self, routes):
         return [crd for crd in routes if crd not in self.imp_crds]
 
-    def lin_generation(self):
-        n = self.env.shape[0]
-        routes = [
-            [(i, j) for i in range(n) for j in range(n)],  # >v>
-            [(j, i) for i in range(n) for j in range(n)],  # v>v
-            [(i, j) for i in range(n-1, -1, -1) for j in range(n)],  # >^>
-            [(j, i) for i in range(n-1, -1, -1) for j in range(n)],  # v<v
-            [(i, j) for i in range(n) for j in range(n-1, -1, -1)],  # <v<
-            [(j, i) for i in range(n) for j in range(n-1, -1, -1)],  # ^>^
-            [(i, j) for i in range(n-1, -1, -1) for j in range(n-1, -1, -1)],  # <^<
-            [(j, i) for i in range(n - 1, -1, -1) for j in range(n - 1, -1, -1)]  # ^<^
-        ]
-
-        _route = [[], [], [], []]  # >v< , v>^ , >^< , v<^
-        for i in range(n):
-            j = 0 if i % 2 == 0 else n-1
-            while (j >= 0) and (j < n):
-                step = 1 if i % 2 == 0 else -1
-                _route[0].append((i, j))
-                _route[1].append((j, i))
-                j += step
-
-        for i in range(n-1, -1, -1):
-            j = 0 if i % 2 == 0 else n-1
-            while (j >= 0) and (j < n):
-                step = 1 if i % 2 == 0 else -1
-                _route[2].append((i, j))
-                _route[3].append((j, i))
-                j += step
-        routes.extend(_route)
-
-        routes = [self.remove_crds(r) for r in routes]
-        return routes
-
     def random_cont_generation(self, n_routes, crd=None, lin=None):
         routes = []
         for _ in range(n_routes):
             if lin is None:
                 lin = True if np.random.random() < .5 else None
+            elif lin is False:
+                lin = None
             routes.append(random_cont(self.env, crd, lin))
         return routes
+
+    def set_routes(self):
+        self.fg = self.random_generation(1)[0]
+        self.tg = sfl(self.random_cont_generation(1, lin=False)[0])
+        self.th = self.random_cont_generation(1, lin=False)[0]
+        self.f = sfl(self.random_cont_generation(1, lin=True)[0])
 
     @staticmethod
     def breed(pg1, pg2):
@@ -288,7 +277,7 @@ class InitRoute:
 class Solver:
     def __init__(self, env, n_routes, n_generations, elite_ratio=.5, mutate_ratio=.01, print_iter=1):
         self.env = env
-        self.Initializer = InitRoute(env, n_routes)
+        self.Initializer = InitRoute(env)
         self.n_routes = n_routes
         self.n_generations = n_generations
         self.elite_ratio = elite_ratio
@@ -328,11 +317,18 @@ class Solver:
         new_routes = self.mutate_routes(parent+child, self.mutate_ratio)
         return new_routes, rank_info
 
-    def get_routes(self, idx):
+    def get_routes(self, idx, extend=None):
         ranked, rank_info = rank_routes(self.routes)
         solution = self.routes[ranked[idx]]
         score = rank_info[ranked[idx]]
-        return solution, score
+        if extend:
+            return (self.Initializer.fg,
+                    self.Initializer.tg,
+                    self.Initializer.th,
+                    self.Initializer.f,
+                    solution), score,
+        else:
+            return solution, score
 
     @staticmethod
     def breed_routes(routes, ranked, n_elite=None):
